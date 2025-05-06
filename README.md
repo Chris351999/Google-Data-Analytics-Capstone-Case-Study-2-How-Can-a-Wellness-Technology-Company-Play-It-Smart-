@@ -45,3 +45,68 @@ Analyze smart fitness device usage data to gain insight into how people already 
 - **Bellabeat marketing analytics team** – Responsible for using data to guide marketing strategy  
 - **Bellabeat executive team** – Decision-makers who will use insights from this analysis to support company growth
 
+## Prepare
+### Deliverable 2: Data Source Description
+
+#### Data: Introducing the Fitbit Fitness Tracker Data
+
+**Brief**: The Fitbit Fitness Tracker dataset, collected through Amazon Mechanical Turk from 30 users in 2016, provides minute-level smart device data focused on physical activity, heart rate, and sleep monitoring. This dataset is publicly accessible on Kaggle.
+
+- **Access the data**: [FitBit Fitness Tracker Data on Kaggle](https://www.kaggle.com/datasets/arashnic/fitbit)
+- **Contributor**: Möbius, a data scientist with a healthcare focus
+
+---
+
+#### Bias and Credibility Concerns
+
+The data was collected via Amazon Mechanical Turk, which introduces several potential biases:
+
+- **Sampling bias**: Small, non-random sample of only 30 users
+- **Selection bias**: Participants opted in, potentially skewing user profiles
+- **Demographic bias**: No gender or demographic data available
+- **Incentive-driven bias**: Participation could be influenced by compensation, not natural usage
+
+---
+
+#### Data Quality Checks (ROCCC)
+
+| **Data Quality Check** | **Assessment** |
+|------------------------|----------------|
+| **Reliable**           | Moderate – Easy to work with, but limited by small sample size and lack of diversity |
+| **Original**           | No – Data was not collected directly by Fitbit, but via a third-party platform |
+| **Comprehensible**     | Moderate – Structure is mostly clear, though variations in user data and missing entries impact usability |
+| **Current**            | Outdated – Collected in 2016; technology and usage patterns may have evolved |
+| **Cited**              | Yes – Properly cited on Kaggle, shared under public domain (CC0) license |
+
+---
+
+#### Licensing, Privacy, Security, and Accessibility
+
+| **Data Aspect**  | **Assessment** |
+|------------------|----------------|
+| **Licensing**    | CC0 1.0 Universal Public Domain Dedication – Free to use, modify, and distribute |
+| **Privacy**      | No personally identifiable information included |
+| **Security**     | Data stored securely in a password-protected MySQL database |
+| **Accessibility**| Freely accessible on Kaggle for analysis and public sharing |
+
+---
+
+#### Data Integrity Verification
+
+Data integrity was maintained through a structured cleaning and preparation process, which included:
+
+- Column renaming and standardization
+- Data type conversion
+- Removal of duplicate and zero-value rows
+- Inspection for outliers and inconsistencies
+
+---
+
+#### Relevance to This Analysis
+
+Although the dataset has limitations, it offers meaningful behavioral insights into how users interact with fitness trackers. These insights are relevant when examining product use cases for Bellabeat. However:
+
+- The absence of gender-specific data limits precision for Bellabeat's female-focused offerings
+- Biases in data collection should be considered when interpreting the results
+
+> ⚠️ *Note*: Finding updated or alternative Fitbit datasets proved difficult.
