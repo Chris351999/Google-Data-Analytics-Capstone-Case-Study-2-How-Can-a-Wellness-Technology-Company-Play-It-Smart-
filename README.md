@@ -110,3 +110,16 @@ Although the dataset has limitations, it offers meaningful behavioral insights i
 - Biases in data collection should be considered when interpreting the results
 
 > ⚠️ *Note*: Finding updated or alternative Fitbit datasets proved difficult.
+
+## Process
+### Deliverable 3: Data cleaning process 
+As part of the data processing phase, I followed a structured cleaning and transformation workflow to ensure the dataset was accurate, consistent and ready for analysis. Below is a summary of the key cleaning and manipulation steps performed:
+
+- Checked for missing values across all datasets to ensure data integrity.
+- Standardized column names to lowercase using clean_names() for consistency.
+- Converted data types (e.g., date and time formats, numeric fields) to allow proper analysis.
+- Removed duplicate entries to eliminate redundancy and prevent skewed results.
+- Filtered out rows with zero values in critical metrics like total_steps, assuming non-usage of the device on those days.
+- Analyzed unique user IDs across datasets to detect discrepancies in data coverage and engagement.
+
+This step ensured that the data was in the best possible shape for analysis, improving both the reliability and the interpretability of the insights drawn later in the project.
