@@ -123,3 +123,70 @@ As part of the data processing phase, I followed a structured cleaning and trans
 - Analyzed unique user IDs across datasets to detect discrepancies in data coverage and engagement.
 
 This step ensured that the data was in the best possible shape for analysis, improving both the reliability and the interpretability of the insights drawn later in the project.
+
+## Analyze
+### Deliverable 4: A summary of your analysis
+
+**General Observations**
+
+Data discrepancies were noted between the Kaggle dataset description (which mentions 30 users) and the available datasets. 
+
+For example, the user count varies across different datasets, such as:
+"activity_clean" (33 IDs)
+"steps_clean" (33 IDs)
+"calories_clean" (33 IDs)
+"intensities_clean" (33 IDs)
+"sleep_clean" (24 IDs)
+"heartrate_clean" (14 IDs)
+"weight_clean" (8 IDs)
+
+This discrepancy may be due to users owning multiple Fitbit devices or an inconsistency in the dataset description.
+
+**Missing Data**
+
+I observed a noticeable gap in activity data reporting, especially in early May. Users who consistently reported more than 75% of data had a steady activity record, while those below 75% experienced a decline in reporting starting in late April.
+
+
+**Correlations**
+
+Several activity metrics like total distance, tracker distance, and total steps are highly correlated, meaning they convey similar information. This suggests that users' activity levels are reflected across these metrics.
+
+**User Behavior Insights**
+
+- Activity Insights
+
+Over half of the users (58%) log a healthy daily step count ranging from 5,000 to 10,000 steps, but only about one-fifth (21%) of users consistently achieve the 10,000-step goal.
+
+A significant portion of users’ average intensity minutes is spent in sedentary or lightly active states, making up 97% of their daily activity. 
+
+Specifically:
+Sedentary minutes account for around 80%.
+Lightly active minutes contribute to 17%.
+Very active and fairly active minutes are only 2% and 1%, respectively. 
+
+This suggests a lack of moderate to vigorous activity among most users.
+
+Users took the most steps on Saturday and the least number of steps on Sunday
+
+- Caloric Expenditure
+
+Around 42% of users have an average daily calorie expenditure between 1,600 to 2,200 calories
+
+- Sleep Insights
+  
+53% of users sleep less than 7 hours per night, indicating a possible sleep deficiency.
+
+- Heart Rate
+  
+Heart rate readings for most users fall within the normal range, indicating typical heart health.
+
+**Conclusions and Implications**
+These insights can help Bellabeat tailor its marketing strategies and product improvements. By understanding users' activity and sleep patterns, as well as their interaction with the app, Bellabeat can refine strategies to increase engagement and maximize the utility of its product. 
+
+**Key actions could include:**
+
+Developing personalized fitness challenges for users based on their activity levels.
+Enhancing sleep tracking features to better address the needs of users with irregular sleep patterns.
+Encouraging more active behavior by targeting users with higher sedentary time, and offering suggestions for integrating more moderate-to-vigorous activity into their routines.
+These insights could directly influence future product features and marketing approaches to better meet the needs of users and increase overall engagement.
+
