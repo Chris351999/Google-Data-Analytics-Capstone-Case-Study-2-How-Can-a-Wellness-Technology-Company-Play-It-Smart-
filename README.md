@@ -190,3 +190,39 @@ Enhancing sleep tracking features to better address the needs of users with irre
 Encouraging more active behavior by targeting users with higher sedentary time, and offering suggestions for integrating more moderate-to-vigorous activity into their routines.
 These insights could directly influence future product features and marketing approaches to better meet the needs of users and increase overall engagement.
 
+## Share
+
+## Deliverable 5: Supporting visualizations and key findings
+
+The insights I discovered—especially around user activity patterns, sleep behavior, and heart rate trends—shed light on how users are engaging with the Bellabeat app and its features in real life.
+
+To communicate these findings effectively, I adapted my approach based on the needs of different audiences:
+
+**Audience-Focused Communication**
+
+For Bellabeat stakeholders:
+I created a PowerPoint presentation that visually summarizes the key findings. The presentation focuses on clear, standalone graphs that cover:
+Average and median step count
+Intensity of daily activity minutes
+Sleep duration and consistency
+Heart rate insights
+This format was chosen to support quick, intuitive understanding for a non-technical audience.
+
+For technical review and reproducibility:
+A detailed R Markdown report accompanies the presentation. It includes:
+Data cleaning and transformation steps
+Statistical summaries and visualizations
+Justifications for filtering or excluding data
+Annotated code blocks for reproducibility
+This dual-format approach ensures both accessibility and analytical transparency.
+
+![Screenshot 2025-05-13 at 1 09 12 PM](https://github.com/user-attachments/assets/a9a89381-da55-49e4-874d-fff58fd16a78)
+![Screenshot 2025-05-13 at 1 10 41 PM](https://github.com/user-attachments/assets/b9bd68ba-a479-4640-9bb5-53433d52d34d)
+![Screenshot 2025-05-13 at 1 11 02 PM](https://github.com/user-attachments/assets/a3b0913c-9536-4045-82f0-0f7fe9cd183b)
+![Screenshot 2025-05-13 at 1 11 19 PM](https://github.com/user-attachments/assets/e18dff61-0867-4146-b84e-399a833d60c6)
+![Screenshot 2025-05-13 at 1 11 37 PM](https://github.com/user-attachments/assets/9cc3575c-ae3f-409f-9331-f936df481e76)
+![Screenshot 2025-05-13 at 1 11 53 PM](https://github.com/user-attachments/assets/d8ebb79e-42a5-41df-9bb5-f8f96fbab997)
+![Screenshot 2025-05-13 at 1 12 01 PM](https://github.com/user-attachments/assets/9608b1d0-a343-4cf5-9379-933866839250)
+![Screenshot 2025-05-13 at 1 12 08 PM](https://github.com/user-attachments/assets/fe2c36b3-e597-43e6-befa-3fae21ae35f4)
+
+
