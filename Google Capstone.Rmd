@@ -1,0 +1,1120 @@
+---
+title: "Capstone Project Google Analytics"
+author: "Fakontis Christos"
+date: "2025-05-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Installing Packages
+
+```{r }
+install.packages("tidyverse")
+
+install.packages("lubridate")
+
+install.packages("dplyr")
+
+install.packages("ggplot2")
+
+install.packages("skimr")
+
+install.packages("janitor")
+
+install.packages("here")
+
+```
+
+## Loading Packages
+
+```{r}
+library("tidyverse")
+
+library("lubridate")
+
+library("dplyr")
+
+library("ggplot2")
+
+library("skimr")
+
+library("janitor")
+
+library("here")
+```
+
+## Loading dataset
+
+### About the Dataset
+
+This dataset was collected from thirty Fitbit users via a distributed survey conducted through Amazon Mechanical Turk between **March 12, 2016, and May 12, 2016**. The dataset is publicly available on Kaggle and was published by user Möbius.
+
+-   **Dataset link**: [Fitbit Fitness Tracker Data on Kaggle](https://www.kaggle.com/arashnic/fitbit)
+-   **Format**: CSV files
+-   **Storage**: The data was downloaded and stored in a secure, organized folder structure.
+
+------------------------------------------------------------------------
+
+### Importing and Preparing the Dataset
+
+The dataset will be imported into **RStudio Cloud** for analysis. After import, we will proceed with the following steps:
+
+1.  **View** the raw data structure
+2.  **Clean** the column names for consistency using `janitor::clean_names()`
+3.  **Format** the columns to appropriate types (e.g., date/time, numeric)
+4.  **Organize** the datasets to support exploratory data analysis
+
+------------------------------------------------------------------------
+
+```{r}
+
+activity <- read_csv("/Users/christosfacondis/Desktop/Google Capstone/data/fitbit2/dailyActivity_merged.csv") 
+
+sleep <- read_csv("/Users/christosfacondis/Desktop/Google Capstone/data/fitbit2/sleepDay_merged.csv") 
+
+steps <- read_csv("/Users/christosfacondis/Desktop/Google Capstone/data/fitbit2/dailySteps_merged.csv")
+
+weight <- read_csv("/Users/christosfacondis/Desktop/Google Capstone/data/fitbit2/weightLogInfo_merged.csv") 
+
+intensities <-  read_csv("/Users/christosfacondis/Desktop/Google Capstone/data/fitbit2/dailyIntensities_merged.csv") 
+
+calories <-  read_csv("/Users/christosfacondis/Desktop/Google Capstone/data/fitbit2/dailyCalories_merged.csv") 
+
+heartrate <- read_csv("/Users/christosfacondis/Desktop/Google Capstone/data/fitbit2/heartrate_seconds_merged.csv") 
+
+```
+
+## Preview of our data-sets
+
+```{r}
+head(activity)
+
+head(sleep)
+
+head(steps)
+
+head(weight)
+
+head(intensities)
+
+head(calories)
+
+head(heartrate)
+
+```
+
+## Clean datasets
+
+### Check for duplicates
+
+```{r}
+
+print(paste("Duplicate rows in activity:", sum(duplicated(activity))))
+print(paste("Duplicate rows in sleep:", sum(duplicated(sleep))))
+print(paste("Duplicate rows in weight:", sum(duplicated(weight))))
+print(paste("Duplicate rows in calories:", sum(duplicated(calories))))
+print(paste("Duplicate rows in heartrate:", sum(duplicated(heartrate))))
+print(paste("Duplicate rows in intensities:", sum(duplicated(intensities))))
+print(paste("Duplicate rows in steps:", sum(duplicated(steps))))
+
+```
+
+### Check for missing values
+
+```{r}
+
+print(paste("Missing values in activity:", sum(is.na(activity))))
+print(paste("Missing values in sleep:", sum(is.na(sleep))))
+print(paste("Missing values in calories:", sum(is.na(calories))))
+print(paste("Missing values in heartrate:", sum(is.na(heartrate))))
+print(paste("Missing values in intensities:", sum(is.na(intensities))))
+print(paste("Missing values in weight:", sum(is.na(weight))))
+print(paste("Missing values in steps:", sum(is.na(steps))))
+
+```
+
+### Cleaning initialization
+
+#### Activity data-set cleaning
+
+```{r}
+activity <- clean_names(activity) %>% # Clean column names
+  mutate(id = as.character(id)) %>% # from double to chr 
+  mutate(activity_date = as.Date(activity_date, format = "%m/%d/%Y")) %>% 
+  distinct()   # Remove duplicate rows
+
+# Check activity data-set after cleaning
+glimpse(activity)
+```
+
+#### Activity data-set more exploration
+
+Print summary statistics to have a better idea of the dataset
+
+```{r}
+summary(activity)
+```
+
+**Observation:** Some attributes have a minimum value of zero (total_step, total_distance, calories etc.). That is impossible and we need to explore more our data-set.
+
+```{r}
+filter(activity, total_steps == 0) # Check each entry where total_steps is zero
+filter(activity, total_distance == 0) # Check each entry where total_distance is zero
+filter(activity, calories == 0) # Check each entry where calories is zero
+filter(activity, tracker_distance == 0) # Check each entry where tracker_distance is zero
+
+```
+
+There are 77 entries where the **TotalSteps** value is recorded as zero, 78 entries of **total_distance** as zero and 4 entries of calories as zero . These likely represent instances when the user did not wear their Fitbit device, rather than actual inactivity. To ensure the accuracy of our analysis---particularly when calculating metrics like the mean and median---we will remove these records from the dataset.
+
+```{r}
+activity_clean <- filter(activity,
+         total_steps != 0,
+         total_distance != 0,
+         calories != 0)
+
+print(activity_clean)
+```
+
+#### Check the data-set again
+
+```{r}
+# Summary before removing zero step records
+print("Summary BEFORE removing entries with 0:")
+print(summary(activity[,c("total_steps", "total_distance","calories")]))
+
+
+# Summary after removing zero step records
+print("Summary AFTER removing entries with 0:")
+print(summary(activity_clean[,c("total_steps", "total_distance","calories")]))
+
+```
+
+#### Sleep data-set cleaning
+
+```{r}
+sleep_clean <-  clean_names(sleep) %>%   # Clean column names
+  mutate(id = as.character(id)) %>% # from double to chr
+  mutate(sleep_day = as.Date(sleep_day,
+                             format = "%m/%d/%Y")) %>% # from chr to date
+  distinct() #remove dublicates
+
+# Check clean daily_sleep dataset
+glimpse(sleep_clean)
+
+# more exploration
+summary(sleep_clean)
+```
+
+#### Calories data-set cleaning
+
+```{r}
+calories_clean <-  clean_names(calories) %>%   # Clean column names
+  mutate(id = as.character(id)) %>% # from double to chr
+  mutate(activity_day = as.Date(activity_day,
+                             format = "%m/%d/%Y")) %>% # from chr to date
+  distinct() #remove dublicates
+
+# Check clean daily_sleep dataset
+glimpse(sleep_clean)
+
+# more exploration
+summary(sleep_clean)
+```
+
+#### Heartrate data-set cleaning
+
+```{r}
+heartrate_clean <- clean_names(heartrate) %>%   # Clean column names
+  mutate(id = as.character(id)) %>% # from double to chr
+  mutate(time = as_datetime(time,
+                            format = "%m/%d/%Y %I:%M:%S %p")) %>% # from chr to datetime
+  rename(date_time = time,
+         heart_rate = value) %>%   # Rename columns
+  distinct()   # Remove duplicate rows
+
+glimpse(heartrate_clean)
+```
+
+#### Steps data-set cleaning
+
+```{r}
+steps_clean <-  clean_names(steps) %>%   # Clean column names
+  mutate(id = as.character(id)) %>% # from double to chr
+  mutate(activity_day = as.Date(activity_day,
+                             format = "%m/%d/%Y")) %>% # from chr to date
+  distinct() #remove dublicates
+
+# Check clean daily_sleep dataset
+glimpse(steps_clean)
+
+# more exploration
+summary(steps_clean)
+```
+
+#### Weight data-set cleaning
+
+```{r}
+
+weight_clean <- clean_names(weight) %>%   # Clean column names
+  mutate(id = as.character(id)) %>% # from double to chr
+  mutate(date = as_datetime(date,
+                            format = "%m/%d/%Y %I:%M:%S %p")) %>% # from chr to datetime
+  rename(date_time = date) %>% # Rename columns
+  # Remove duplicate rows
+  distinct()
+
+# Change NA to 0 in the column "fat"
+weight_clean$fat[is.na(weight_clean$fat)] <- 0
+
+# Check clean daily_activity dataset
+glimpse(weight_clean)
+```
+
+#### Intensitie data-set cleaning
+
+```{r}
+intensities_clean <- clean_names(intensities) %>%   # Clean column names
+  mutate(id = as.character(id)) %>% # from double to chr
+  mutate(activity_day = as.Date(activity_day,
+                             format = "%m/%d/%Y")) %>% # from chr to date
+  distinct() #remove dublicates
+
+
+# Check clean daily_activity dataset
+glimpse(intensities_clean)
+```
+
+### Unique IDs per data-set
+
+```{r}
+datasets <- c(
+  "activity_clean",
+  "sleep_clean",
+  "steps_clean",
+  "calories_clean",
+  "heartrate_clean",
+  "weight_clean",
+  "intensities_clean"
+)
+# Empty data frame
+distinct_id_summary <- data.frame(
+  Dataset = character(),
+  Distinct_IDs = integer(),
+  stringsAsFactors = FALSE
+)
+
+# Loop through each dataset, calculate distinct IDs and store the result
+for (name in datasets) {
+  data <- get(name)
+  num_ids <- n_distinct(data$id)
+  distinct_id_summary <- bind_rows(
+    distinct_id_summary,
+    data.frame(Dataset = name, Distinct_IDs = num_ids)
+  )
+}
+
+distinct_id_summary <- distinct_id_summary %>%
+  arrange(desc(Distinct_IDs))
+
+print(distinct_id_summary)
+
+```
+
+**Observations:** The variation in the number of unique user IDs across the datasets suggests possible gaps in data collection or that not all users engaged equally with every feature. This might reflect inconsistent usage patterns or missing data in certain areas.
+
+## Analyze Activity data-set
+
+```{r}
+# Activity 
+activity_clean %>%   
+  select(total_steps, 
+         total_distance, 
+         sedentary_minutes, calories) %>% 
+  summary() 
+
+# Histogram for Total Steps
+ggplot(activity_clean, aes(x = total_steps)) +
+  geom_histogram(fill = "#69b3a2", bins = 30, color = "black") +
+  labs(title = "Distribution of Total Steps per Day",
+       x = "Total Steps",
+       y = "Frequency") +
+  theme_minimal()
+
+# Histogram for Total Distance
+ggplot(activity_clean, aes(x = total_distance)) +
+  geom_histogram(fill = "#fcbf49", bins = 30, color = "black") +
+  labs(title = "Distribution of Total Distance per Day",
+       x = "Total Distance (miles)",
+       y = "Frequency") +
+  theme_minimal()
+
+# Histogram for Sedentary Minutes
+ggplot(activity_clean, aes(x = sedentary_minutes)) +
+  geom_histogram(fill = "#577590", bins = 30, color = "black") +
+  labs(title = "Distribution of Sedentary Minutes per Day",
+       x = "Sedentary Minutes",
+       y = "Frequency") +
+  theme_minimal()
+
+# Histogram for calories
+ggplot(activity_clean, aes(x = calories)) +
+  geom_histogram(fill = "#577590", bins = 30, color = "black") +
+  labs(title = "Distribution of calories per Day",
+       x = "calories",
+       y = "Frequency") +
+  theme_minimal()
+```
+
+#### Summary Statistics of Key Activity Metrics
+
+After cleaning the `daily_activity` dataset, I reviewed the core variables to understand user behavior and daily patterns. Below is a summary of key metrics:
+
+-   **Total Steps**
+    -   Range: *8 steps* to *36,019 steps* per day\
+    -   Median: **8,054**\
+    -   Mean: **8,329**\
+    -   Insight: Slightly right-skewed distribution, indicating some users walk significantly more than average
+-   **Total Distance (miles)**
+    -   Range: *0.01* to *28.03 miles*\
+    -   Median: **5.59 miles**\
+    -   Mean: **5.99 miles**\
+    -   Insight: Daily movement varies, with most users covering between 3--8 miles
+-   **Sedentary Minutes**
+    -   Range: *0* to *1,440 minutes*\
+    -   Median: **1,020.5 minutes** (\~17 hours)\
+    -   Mean: **955.2 minutes**\
+    -   Insight: Users are generally sedentary for most of the day
+-   **Calories Burned**
+    -   Range: *52* to *4,900 calories*\
+    -   Median: **2,220 calories**\
+    -   Mean: **2,362 calories**\
+    -   Insight: Energy expenditure is fairly normally distributed, with outliers on high-activity days
+
+These statistics offer a foundational understanding of Fitbit user habits and provide behavioral trends that can inform Bellabeat's product and marketing strategy.
+
+##### Observations from Histogram Analysis
+
+-   The distributions of most variables are **right-skewed**, meaning most values are concentrated on the lower end with a few high outliers.
+
+-   **`total_steps`** and **`total_distance`**have similar distribution shapes, indicating a possible correlation worth analyzing further.
+
+-   Since the data is **not normally distributed**, the **median** serves as a more reliable measure of central tendency than the mean
+
+```{r}
+#Distributiuon of Activity Date
+ggplot(data=activity_clean , aes(x = activity_date)) + 
+  geom_histogram(binwidth = 1, color = "black", fill = "lightpink") +
+  labs(x = "Activity Date", y = "Frequency", title = "Distribution of Activity Date") 
+```
+
+##### Observations
+
+Toward the end of the data collection period --- particularly in early May --- we observe a noticeable decline in recorded activity. This reduction in entries may indicate a drop in user engagement or possible non-usage of the tracking devices.
+
+It's also plausible that seasonal factors, such as the beginning of summer, influenced user routines, leading to reduced activity tracking during this period.
+
+```{r}
+users_per_day <- activity_clean %>%
+  group_by(activity_date) %>%
+  summarise(active_users = n_distinct(id))
+
+ggplot(users_per_day, aes(x = activity_date, y = active_users)) +
+  geom_line(color = "darkgreen", size = 1) +
+  labs(title = "Active Users Per Day",
+       x = "Date",
+       y = "Number of Unique Users") +
+  theme_minimal()
+```
+
+##### Observations on User Activity Over Time
+
+Based on the analysis of unique user activity per day, we observe a noticeable decline in the number of active users toward the end of the data collection period in early May. This trend suggests that the reduced activity is not simply due to incomplete logging, but rather a decrease in user participation.
+
+One possible explanation could be seasonal factors---such as the beginning of summer---which may influence user engagement with their fitness trackers.
+
+```{r}
+# Filter users with high engagement (top 75% based on number of activity entries)
+top_active_users <- activity_clean %>%
+  group_by(id) %>%
+  summarise(entry_count = n()) %>%
+  filter(entry_count >= quantile(entry_count, 0.75))
+
+# Plot activity date distribution for highly engaged users
+ggplot(data = activity_clean %>% filter(id %in% top_active_users$id), 
+       aes(x = activity_date)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "darkblue") +
+  labs(
+    title = "Activity Logging Trend for Highly Engaged Users",
+    x = "Date",
+    y = "Logged Entries"
+  ) +
+  theme_minimal()
+
+# Filter users with low engagement (under 75% based on number of activity entries)
+low_active_users <- activity_clean %>%
+  group_by(id) %>%
+  summarise(entry_count = n()) %>%
+  filter(entry_count < quantile(entry_count, 0.75))
+
+# Plot activity date distribution for less engaged users
+ggplot(data = activity_clean %>% filter(id %in% low_active_users$id), 
+       aes(x = activity_date)) +
+  geom_histogram(binwidth = 1, fill = "lightcoral", color = "darkred") +
+  labs(
+    title = "Activity Logging Trend for Less Engaged Users",
+    x = "Date",
+    y = "Logged Entries"
+  ) +
+  theme_minimal()
+
+
+```
+
+##### Observations:
+
+Users with more than 75% of data consistently report activity dates, while those with less than 75% of data show a decline in reporting starting from the end of April. The decline in Activity Date seems to be primarily due to a lack of data reporting from some users during that period.
+
+## Analyze steps
+
+```{r}
+# Create a horizontal boxplot for the 'total_steps' variable
+
+boxplot(activity_clean$total_steps, 
+        main = "Boxplot of Total Steps",
+        xlab = "Total Steps", 
+        col = "lightblue", 
+        border = "black", 
+        horizontal = TRUE)  # Making the boxplot horizontal
+
+# Calculate the median and standard deviation of 'total_steps'
+median_value <- median(activity_clean$total_steps)
+std_dev <- round(sd(activity_clean$total_steps), 2)
+
+# Identify outliers using boxplot.stats
+outliers <- boxplot.stats(activity_clean$total_steps)$out
+
+# Count the number of outliers
+num_outliers <- length(outliers)
+
+# Construct the legend label with the calculated statistics
+legend_label <- paste("Median: ", median_value, 
+                      "\nStandard Deviation: ", std_dev, 
+                      "\nOutliers: ", num_outliers)
+
+# Add a legend to the right of the plot
+legend("topright", legend = legend_label, 
+       pch = "", col = "black", bty = "n", cex = 0.4)
+
+
+```
+
+### Observations from Boxplot of Total Step
+
+**Median** The median total steps is 8,053, representing the typical daily step count. **Standard Deviation:** The standard deviation is 4,739, indicating considerable variability in users' activity levels. **Outliers:** There are 15 outliers, showing that some users take significantly more or fewer steps than the majority.
+
+```{r}
+# Create a histogram for total_steps
+ggplot(activity_clean, aes(x = total_steps)) + 
+  geom_histogram(binwidth = 1000, fill = "lightblue", color = "black", alpha = 0.7) +
+  labs(
+    title = "Histogram of Total Steps",
+    x = "Total Steps",
+    y = "Frequency"
+  ) +
+  theme_minimal()
+
+```
+### Observation: 
+The distribution is right-skewed, meaning most users take fewer steps, with a few highly active users contributing to the higher end.
+
+```{r}
+# Steps averages by IDs
+steps_per_id <- activity_clean %>%
+  group_by(id) %>%
+  summarise(average_steps = mean(total_steps), 
+            median_steps =median(total_steps), n = n())
+
+steps_per_id_sorted <- steps_per_id %>% 
+  arrange(desc(median_steps))
+
+# View the sorted data
+steps_per_id_sorted
+steps_per_id
+```
+
+```{r}
+# Calculate percentages for the 'average_steps' column
+below_5k_avg <- sum(steps_per_id$average_steps < 5000) / nrow(steps_per_id) * 100
+between_5k_10k_avg <- sum(steps_per_id$average_steps >= 5000 & steps_per_id$average_steps < 10000) / nrow(steps_per_id) * 100
+at_least_10k_avg <- sum(steps_per_id$average_steps >= 10000) / nrow(steps_per_id) * 100
+
+# Calculate percentages for the 'median_steps' column
+below_5k_med <- sum(steps_per_id$median_steps < 5000) / nrow(steps_per_id) * 100
+between_5k_10k_med <- sum(steps_per_id$median_steps >= 5000 & steps_per_id$median_steps < 10000) / nrow(steps_per_id) * 100
+at_least_10k_med <- sum(steps_per_id$median_steps >= 10000) / nrow(steps_per_id) * 100
+
+# Create a data frame for the steps categories and their percentages
+steps_percentage_df <- data.frame(
+  Category = c("Below 5,000", "Between 5,000 and 10,000", "At least 10,000"),
+  Percentage_Average = round(c(below_5k_avg, between_5k_10k_avg, at_least_10k_avg)),
+  Percentage_Median = round(c(below_5k_med, between_5k_10k_med, at_least_10k_med))
+)
+
+steps_percentage_df
+
+```
+
+```{r}
+
+# Ensure the order of categories is preserved
+steps_percentage_df$Category <- factor(steps_percentage_df$Category,
+                                       levels = c("Below 5,000", "Between 5,000 and 10,000", "At least 10,000"))
+
+# Plot only the Median Steps
+ggplot(steps_percentage_df, aes(x = Category, y = Percentage_Median, fill = Category)) +
+  geom_bar(stat = "identity", width = 0.6, show.legend = FALSE) +
+  geom_text(aes(label = paste0(Percentage_Median, "%")), 
+            vjust = 0.4, color = "black", size = 4) +
+  labs(title = "Daily Step Count Distribution Based on Median Steps",
+       subtitle = "Majority of users fall below the recommended 10,000 steps/day goal",
+       x = "Step Count Category",
+       y = "Percentage of Users") +
+  scale_fill_manual(values = c("Below 5,000" = "lightyellow", 
+                               "Between 5,000 and 10,000" = "lightblue", 
+                               "At least 10,000" = "darkred")) +
+  theme_minimal() +
+  theme(panel.grid = element_blank(),
+        plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 10),
+        axis.text.x = element_text(size = 10))
+
+```
+
+### Observations:
+Over half of users maintain a healthy daily step count range of 5,000 to 10,000 steps, but only one-fifth achieve the 10,000-step milestone.
+
+```{r}
+
+# Create a weekday column
+activity_clean$weekday <- weekdays(activity_clean$activity_date)
+
+# Order the weekdays to start from Monday
+activity_clean$weekday <- factor(activity_clean$weekday, 
+                                 levels = c("Monday", "Tuesday", "Wednesday", 
+                                            "Thursday", "Friday", "Saturday", "Sunday"))
+
+# Calculate average steps per weekday
+avg_steps_weekday <- activity_clean %>%
+  group_by(weekday) %>%
+  summarise(average_steps = round(mean(total_steps), 0))
+
+# Plot: Vertical bar chart
+ggplot(avg_steps_weekday, aes(x = weekday, y = average_steps)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Average Steps per Day of the Week",
+       x = "Day of the Week",
+       y = "Average Steps") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(size = 10))  # Adjust size as needed
+
+
+```
+
+### Observations: 
+Users took the most steps on Saturday and the least number of steps on Sunday
+
+```{r}
+# Steps vs Calories Burned
+
+ggplot(activity_clean, aes(x = total_steps, y = calories)) +
+  geom_point(aes(color = total_distance), alpha = 0.6) +
+  geom_smooth(se = TRUE, color = "darkred", size = 1.2) +
+  labs(
+    title = "Total Steps vs. Calories Burned",
+    subtitle = "Smoothed trend shows where calorie burn plateaus",
+    x = "Total Steps",
+    y = "Calories Burned",
+    caption = "Color represents total distance covered"
+  ) +
+  scale_color_viridis_c(name = "Distance (Km)", option = "plasma") +
+  scale_x_continuous(labels = scales::comma) +
+  scale_y_continuous(labels = scales::comma) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    legend.key.width = unit(1.2, "cm"),
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 10),
+    axis.text = element_text(size = 9)
+  )
+
+
+```
+
+### Observations:
+The plot **"Relationship Between Steps and Calories Burned"** shows a clear positive trend—more steps typically lead to more calories burned. However, the increase appears to slow down and plateau after approximately 30,000 steps, likely due to fewer data points in that range. The color gradient represents total distance walked, with lighter shades indicating longer distances.
+
+```{r}
+ggplot(data = activity_clean, aes(x = total_steps, y = sedentary_minutes)) +
+  geom_point(alpha = 0.6, color = "steelblue", size = 2) +
+  geom_smooth(method = "loess", se = TRUE, color = "darkblue", size = 1.2) +  # Smoother curve
+  labs(
+    title = "Total Steps vs. Sedentary Minutes",
+    subtitle = "Relationship between activity and inactivity levels",
+    x = "Total Steps",
+    y = "Sedentary Minutes",
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 12, face = "bold"),
+    plot.subtitle = element_text(size = 8),
+    axis.text = element_text(size = 10),
+    legend.position = "none"
+  )
+
+```
+
+### Observations
+
+The analysis indicates a clear negative correlation between total steps and sedentary minutes. In other words, as sedentary time increases, users tend to take fewer steps throughout the day. This finding could help guide marketing strategies by identifying less active users. Encouraging these individuals to increase their daily step count—possibly through personalized goals or activity challenges—could lead to higher engagement with fitness tracking tools.
+
+## Analyze Sedentary Minutes
+```{r}
+# Check sedentary_minutes stats
+activity_clean$sedentary_minutes %>% summary()
+
+outliers
+
+# Create the horizontal boxplot
+boxplot(activity_clean$sedentary_minutes,
+        main = "Distribution of Sedentary Minutes",
+        xlab = "Sedentary Minutes",
+        col = "steelblue",          # Light salmon fill
+        border = "black",       # Dark red border
+                     # Notch for median
+        horizontal = TRUE,
+        frame.plot = FALSE,
+        cex.main = 1.2,
+        cex.lab = 1.1)
+
+# Stats for legend
+median_value <- median(activity_clean$sedentary_minutes)
+std_dev <- sd(activity_clean$sedentary_minutes)
+outliers <- boxplot.stats(activity_clean$sedentary_minutes)$out
+num_outliers <- length(outliers)
+
+# Add legend at top-right (manually adjust coordinates if needed)
+legend("topleft",
+       legend = c(paste("Median:", round(median_value, 1)),
+                  paste("SD:", round(std_dev, 1)),
+                  paste("Outliers:", num_outliers)),
+       bty = "n",
+       text.col = "black",
+       cex = 0.5
+       )
+
+
+```
+
+### Observations on Sedentary Minutes
+
+The data shows notably high sedentary time values — for example, 1,020 minutes equals 17 hours, and 1,400 minutes spans a full 24 hours. A quick investigation suggests that Fitbit may default to a value around 1,400 when the device isn't being worn. This implies that some of the recorded sedentary minutes could actually represent periods when the device was off the wrist, including during sleep.
+
+According to the data documentation, `sedentary_minutes` reflects the total time a user was inactive. However, since sleep time is not categorized as sedentary, subtracting sleep duration can provide a more accurate picture of waking inactivity.
+
+> "Sleep time is not considered sedentary time, so it was removed to determine the waking day and to allow the proportion of the day spent sedentary to be calculated." 
+
+## Analyze calories 
+```{r}
+# Create a boxplot for calories
+boxplot(activity_clean$calories, 
+        main = "Boxplot of Calories",
+        ylab = "Calories")
+
+# Calculate the median and standard deviation
+median_value <- median(activity_clean$calories)
+std_dev <- round(sd(activity_clean$calories),2)
+
+# Identify outliers
+outliers <- boxplot.stats(activity_clean$calories)$out
+
+# Count the number of outliers
+num_outliers <- length(outliers)
+
+# Create the legend label with median, standard deviation, and outlier count
+legend_label <- paste("Median:", median_value, 
+                      "\nStandard Deviation:", std_dev, 
+                      "\nOutliers:", num_outliers)
+
+# Add the legend with median, standard deviation, and outlier count
+legend("topright", legend = legend_label, pch = "", col = "black", bty = "n", cex = 0.4)
+```
+
+```{r}
+# 📊 Average and Median Calories Burned Per User
+
+calories_id_unique <- activity_clean %>%
+  group_by(id) %>%
+  summarise(
+    average_calories = round(mean(calories), 1),
+    median_calories = round(median(calories), 1),
+    .groups = "drop"
+  )
+
+calories_id_unique
+
+```
+
+```{r}
+# Calculate percentages for the average column
+below_1600_avg <- sum(calories_id_unique$average_calories < 1600) / nrow(calories_df) * 100
+between_1600_2200_avg <- sum(calories_id_unique$average_calories >= 1600 & calories_df$average_calories < 2200) / nrow(calories_df) * 100
+between_2200_3000_avg <- sum(calories_id_unique$average_calories >= 2200 & calories_df$average_calories < 3000) / nrow(calories_df) * 100
+at_least_3000_avg <- sum(calories_id_unique$average_calories >= 3000) / nrow(calories_df) * 100
+
+# Calculate percentages for the median column
+below_1600_med <- sum(calories_id_unique$median_calories < 1600) / nrow(calories_df) * 100
+between_1600_2200_med <- sum(calories_id_unique$median_calories >= 1600 & calories_df$median_calories < 2200) / nrow(calories_df) * 100
+between_2200_3000_med <- sum(calories_id_unique$median_calories >= 2200 & calories_df$median_calories < 3000) / nrow(calories_df) * 100
+at_least_3000_med <- sum(calories_id_unique$median_calories >= 3000) / nrow(calories_df) * 100
+
+# Create a data frame for the calories categories
+percentage_calories_df <- data.frame(
+  Category = c("Below 1,600", "Between 1,600 and 2,200", "Between 2,200 and 3,000", "At least 3,000"),
+  Percentage_Average = round(c(below_1600_avg, between_1600_2200_avg, between_2200_3000_avg, at_least_3000_avg)),
+  Percentage_Median = round(c(below_1600_med, between_1600_2200_med, between_2200_3000_med, at_least_3000_med))
+)
+
+# Convert "Category" to a factor with custom factor levels
+percentage_calories_df$Category <- factor(percentage_calories_df$Category, levels = c("Below 1,600", "Between 1,600 and 2,200", "Between 2,200 and 3,000", "At least 3,000"))
+
+percentage_calories_df
+```
+
+```{r}
+# 📊 Daily Calorie Expenditure Distribution (Average)
+
+ggplot(percentage_calories_df, aes(x = Category, y = Percentage_Average)) +
+  geom_bar(stat = "identity", fill = "steelblue", width = 0.6) +
+  geom_text(aes(label = paste0(Percentage_Average, "%")), 
+            vjust = -0.3, size = 3.5, fontface = "bold") +
+  labs(
+    title = "42% of Users Have an Average Daily Calorie Expenditure Between 1,600 and 2,200",
+    subtitle = "This range aligns with the Dietary Guidelines for American women (2020-2025)",
+    x = "Calorie Intake Category",
+    y = "Percentage of Users"
+  ) +
+  ylim(0, 100) +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    axis.text.x = element_text(size = 10),
+    plot.title = element_text(size = 11, face = "bold"),
+    plot.subtitle = element_text(size = 9, face = "italic")
+  )
+
+```
+
+### Observations:
+Approximately 42% of users maintain an average daily calorie expenditure ranging from 1,600 to 2,200
+
+```{r}
+
+# Calories Burned by Weekday
+ggplot(activity_clean, aes(x = weekday, y = calories, fill = weekday)) + 
+  geom_boxplot(outlier.color = "red", outlier.shape = 16, outlier.size = 2, alpha = 0.7) + 
+  geom_hline(yintercept = 2000, linetype = "dashed", color = "darkblue", size = 0.8) +
+  labs(
+    title = "Daily Calorie Expenditure by Weekday",
+    subtitle = "Analyzing the Link Between Calories Burned and Day of the Week",
+    x = "Day of the Week",
+    y = "Calories Burned",
+  ) +
+  scale_fill_brewer(palette = "Pastel2") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 5, face = "italic"),
+    legend.position = "none"
+  )
+
+```
+
+###Observation: 
+The boxplot illustrates that the majority of participants do not exceed the recommended daily calorie burn of 2,000.
+
+## Analyze Intensity Minutes: Time spent in one of four intensity categories.
+
+```{r}
+activity_minutes_unique <- 
+  activity_clean %>%
+  group_by(id) %>%
+  summarise(
+    average_very_active_minutes = mean(very_active_minutes),
+    average_fairly_active_minutes = mean(fairly_active_minutes),
+    average_lightly_active_minutes = mean(lightly_active_minutes),
+    average_sedentary_minutes = mean(sedentary_minutes)
+  )
+
+activity_minutes_unique
+```
+
+```{r}
+
+# Reshape your data to long format for easier plotting
+activity_minutes_long <- activity_minutes_unique %>%
+  select(id, average_very_active_minutes, average_fairly_active_minutes, average_lightly_active_minutes, average_sedentary_minutes) %>%
+  rename(
+    `Very Active` = average_very_active_minutes,
+    `Fairly Active` = average_fairly_active_minutes,
+    `Lightly Active` = average_lightly_active_minutes,
+    Sedentary = average_sedentary_minutes
+  ) %>%
+  pivot_longer(cols = -id, names_to = "Activity_Level", values_to = "Minutes")
+
+# Define custom order of activity levels
+activity_minutes_long$Activity_Level <- factor(activity_minutes_long$Activity_Level, 
+                                               levels = c("Very Active", "Fairly Active", "Lightly Active", "Sedentary"))
+
+# Create a horizontal stacked bar plot
+ggplot(activity_minutes_long, aes(x = Minutes, y = reorder(id, Minutes), fill = Activity_Level)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(
+    values = c(
+      "Very Active" = "#E74C3C", 
+      "Fairly Active" = "#F39C12", 
+      "Lightly Active" = "#2ECC71", 
+      "Sedentary" = "#3498DB"
+    )
+  ) +
+  labs(
+    title = "Breakdown of Average Daily Activity Minutes per User",
+    x = "Average Daily Minutes",
+    y = "User ID",
+    fill = "Activity Level"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 9),
+    plot.title = element_text(face = "bold", size = 13),
+    axis.text.y = element_text(size = 3),
+    panel.grid = element_blank()
+  )
+
+```
+
+```{r}
+activity_cols <- c("average_very_active_minutes", "average_fairly_active_minutes", 
+                   "average_lightly_active_minutes", "average_sedentary_minutes")
+
+# Calculate averages and proportions
+averages <- colMeans(activity_minutes_unique[activity_cols])
+proportions <- prop.table(averages) * 100
+
+# Create a tidy dataframe
+overall_average_df <- data.frame(
+  Activity = c("Very Active", "Fairly Active", "Lightly Active", "Sedentary"),
+  Average_Minutes = round(averages, 1),
+  Percentage = round(proportions, 1)
+)
+
+# View result
+overall_average_df
+
+```
+
+```{r}
+ggplot(overall_average_df, aes(x = Percentage, y = reorder(Activity, Percentage), fill = Activity)) +
+  geom_bar(stat = "identity", width = 0.7, show.legend = FALSE) +
+  geom_text(aes(label = paste0(round(Percentage), "%")), hjust = -0.3, color = "black", size = 4) +
+  ylab("Activity Type") +
+  xlab("Percentage of Total Minutes") +
+  ggtitle("Distribution of Users' Overall Average Intensity Minutes") +
+  scale_fill_manual(values = c("Very Active" = "#FF6347", "Fairly Active" = "#FFA500", 
+                               "Lightly Active" = "#32CD32", "Sedentary" = "#87CEEB")) +
+  scale_x_continuous(labels = scales::comma_format()) +
+  theme_minimal(base_size = 6) +
+  theme(legend.position = "none", 
+        panel.grid = element_blank(), 
+        axis.text.y = element_text(size = 5, color = "black"), 
+        plot.title = element_text(hjust = 0.5, size = 10, face = "bold"),
+        axis.title.x = element_text(size = 8), 
+        axis.title.y = element_text(size = 5)) 
+
+```
+
+### Observations:
+
+Sedentary activities make up the majority of users’ average intensity minutes, at around 80%. Lightly active time accounts for 17%, while very active and fairly active minutes are limited to 2% and 1%, respectively.
+
+## Analyze Sleep data set
+
+```{r}
+# Frequency table for total sleep records
+frequency_table <- as.data.frame(table(sleep_clean$total_sleep_records))
+frequency_table$Percentage <- frequency_table$Freq / sum(frequency_table$Freq) * 100
+
+ggplot(data = frequency_table, aes(x = Var1, y = Freq)) +
+  geom_bar(stat = "identity", fill = "#steelblue") +
+  geom_text(aes(label = paste(Freq, "(", round(Percentage, 1), "%)", sep = "")),
+            vjust = -0.5, color = "black") +
+  labs(x = "Total Sleep Records", y = "Frequency",
+       title = "Most Sleep Records Indicate a Singular Sleep Period") +
+  theme_minimal() +
+  theme(panel.grid = element_blank(),
+        plot.title = element_text(size = 14),
+        axis.title = element_text(size = 12))
+
+```
+
+### Observations:
+
+In 89% of the sleep records, users typically have a single continuous sleep period, including naps that last over 60 minutes.
+
+```{r}
+# Create a boxplot for total_minutes_asleep
+boxplot(sleep_clean$total_minutes_asleep, 
+        main = "Boxplot of Total Minutes Asleep",
+        ylab = "Total Minutes Asleep",
+        col = "lightblue", 
+        border = "black",
+        horizontal = TRUE, 
+        las = 1)
+
+# Calculate the median and standard deviation
+median_value <- median(sleep_clean$total_minutes_asleep)
+std_dev <- round(sd(sleep_clean$total_minutes_asleep), 2)
+
+# Identify outliers
+outliers <- boxplot.stats(sleep_clean$total_minutes_asleep)$out
+
+# Count the number of outliers
+num_outliers <- length(outliers)
+
+# Create the legend label with median, standard deviation, and outlier count
+legend_label <- paste("Median:", median_value, 
+                      "\nStandard Deviation:", std_dev, 
+                      "\nOutliers:", num_outliers)
+
+# Add the legend with median, standard deviation, and outlier count
+legend("topright", legend = legend_label, pch = "", col = "black", bty = "n", cex = 0.85)
+
+```
+
+### Observation: 
+The median of user sleep is 432.5 minutes, indicating that half of the users sleep more or less than this amount. Additionally, there are 27 outliers in the data, which represent extreme values outside the typical sleep durations. These outliers might suggest irregular sleeping patterns or possible data entry issues that warrant further investigation.
+
+```{r}
+ # Sleep duration averages by IDs with standard deviation and count (n)
+sleep_df <- sleep_clean %>%
+  group_by(id) %>%
+  summarise(
+    `Avg_Sleep (mins)` = round(mean(total_minutes_asleep), 2),
+    `Std_Dev_Sleep (mins)` = round(sd(total_minutes_asleep), 2),
+    `N` = n(),
+    `Min_leep (mins)` = min(total_minutes_asleep),
+    `Max_Sleep (mins)` = max(total_minutes_asleep)
+  ) %>%
+  arrange(desc(`Avg_Sleep (mins)`))  # Optional: Sort by average sleep time
+
+# Preview the updated dataframe
+print(sleep_df)
+
+```
+
+```{r}
+
+# Calculate percentages for the average sleep durations
+below_6_hours <- sum(sleep_df$`Avg_Sleep (mins)` < 360) / nrow(sleep_df) * 100
+between_6_7_hours <- sum(sleep_df$`Avg_Sleep (mins)` >= 360 & sleep_df$`Avg_Sleep (mins)` < 420) / nrow(sleep_df) * 100
+at_least_7_hours <- sum(sleep_df$`Avg_Sleep (mins)` >= 420) / nrow(sleep_df) * 100
+
+# Calculate the count for each category
+below_6_count <- sum(sleep_df$`Avg_Sleep (mins)` < 360)
+between_6_7_count <- sum(sleep_df$`Avg_Sleep (mins)` >= 360 & sleep_df$`Avg_Sleep (mins)` < 420)
+at_least_7_count <- sum(sleep_df$`Avg_Sleep (mins)` >= 420)
+
+# Create a data frame with enhanced details
+percentage_sleep_df <- data.frame(
+  Category = c("Below 6 hours", "Between 6 and 7 hours", "At least 7 hours"),
+  `Percentage_Users` = round(c(below_6_hours, between_6_7_hours, at_least_7_hours), 1),
+  `Count_Users` = c(below_6_count, between_6_7_count, at_least_7_count)
+)
+
+# Convert Category to a factor with custom factor levels for proper ordering
+percentage_sleep_df$Category <- factor(percentage_sleep_df$Category, levels = c("Below 6 hours", "Between 6 and 7 hours", "At least 7 hours"))
+
+# Print the enhanced data frame
+print(percentage_sleep_df)
+
+
+```
+
+```{r}
+
+# Create the bar plot
+ggplot(percentage_sleep_df, aes(x = Category, y =  Percentage_Users, fill = Category)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +  # `stat = "identity"` uses the y-values directly
+  geom_text(aes(label = paste(Percentage_Users, "%")), vjust = .1, hjust = 0.5,  size = 5) +  # Add percentage labels above the bars
+  scale_fill_manual(values = c("skyblue", "lightgreen", "salmon")) +  # Custom colors for bars
+  labs(
+    title = "Percentage of Users by Sleep Duration Category",
+    x = "Sleep Duration Category",
+    y = "Percentage of Users (%)"
+  ) +
+  theme_minimal() +  # A clean, minimal theme
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Angle x-axis labels for readability
+
+```
+
+### Observations:
+
+A significant portion of users, 53%, have an average daily sleep duration of less than 7 hours.
+
+## Analyze heart rate
+```{r}
+# Group by 'id' and calculate the average heart rate for each user
+average_heart_rate <- heartrate_clean %>%
+  group_by(id) %>%
+  summarise(average_heart_rate = mean(heart_rate, na.rm = TRUE))
+
+# Enhanced bar plot with additional styling
+bar_plot <- ggplot(average_heart_rate, aes(x = id, y = average_heart_rate)) +
+  geom_bar(stat = "identity", aes(fill = average_heart_rate), width = 0.8) +  # Apply gradient fill based on average heart rate
+  scale_fill_gradient(low = "#20A486FF", high = "#FF5733") +  # Gradient fill from green to red
+  labs(
+    x = "User ID", 
+    y = "Average Heart Rate (bpm)", 
+    title = "Average Heart Rate for Each User",
+    subtitle = "Heart rate values are compared to normal range (60-100 bpm)"
+  ) +
+  theme_minimal(base_size = 15) +  # Base font size for better readability
+  coord_flip() +  # Flip coordinates for better user ID display
+  scale_y_continuous(breaks = seq(0, 100, 10), limits = c(0, 100)) +  # Custom y-axis
+  geom_hline(yintercept = 60, linetype = "dashed", color = "black") +  # Normal heart rate lower boundary
+  geom_hline(yintercept = 100, linetype = "dashed", color = "black") +  # Normal heart rate upper boundary
+  geom_text(aes(label = round(average_heart_rate, 1)), vjust = -0.5, color = "black", size = 4) +  # Show values on top of bars
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for better fit
+    axis.title = element_text(face = "bold", size = 14),  # Bold axis titles
+    plot.title = element_text(face = "bold", size = 16),  # Bold title with larger font size
+    plot.subtitle = element_text(size = 12, color = "gray40")  # Subtitle text
+  ) +
+  guides(fill = guide_colorbar(title = "Average HR (bpm)", title.position = "top"))  # Add a colorbar legend for the fill gradient
+
+# Display the bar plot
+print(bar_plot)
+
+```
+
+### Observation:
+Users' average heart rates fall within the normal range, so no notable issues were identified.
+
+However, a potential improvement for the app could be to implement a feature that sends notifications to users whose average resting heart rate falls outside the normal range.
